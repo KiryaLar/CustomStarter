@@ -1,4 +1,4 @@
-package ru.larkin.customstarter.command.util;
+package ru.larkin.customstarter.command.validator;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
