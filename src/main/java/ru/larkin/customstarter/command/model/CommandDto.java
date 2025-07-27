@@ -1,6 +1,7 @@
 package ru.larkin.customstarter.command.model;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -12,7 +13,7 @@ public class CommandDto {
     @Size(max = 1000, message = "Длина описания не должна быть больше 1000 символов.")
     @NotBlank(message = "Требуется описание.")
     private String description;
-    @NotBlank(message = "Требуется приоритет.")
+    @NotNull(message = "Требуется приоритет.")
     private Priority priority;
     @Size(max = 100, message = "Длина автора не должна быть больше 100 символов.")
     @NotBlank(message = "Требуется автор.")

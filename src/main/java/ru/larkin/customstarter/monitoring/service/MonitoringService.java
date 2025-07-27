@@ -1,4 +1,4 @@
-package ru.larkin.customstarter.monitoring.config;
+package ru.larkin.customstarter.monitoring.service;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
@@ -23,16 +23,15 @@ public class MonitoringService {
                 .register(meterRegistry);
     }
 
-    public void publishTasksNumberMetrics(int numberOfTasks) {
+    public void publishTasksInQueueMetrics(int numberOfTasks) {
         currentWorkload.set(numberOfTasks);
     }
 
-    public void publishMetrics(String author) {
+    public void publishCompletedTasksPerAuthorMetrics(String author) {
         Counter.builder("commands.completed")
                 .tag("author", author)
                 .description("Number of completed commands per author")
                 .register(meterRegistry)
                 .increment();
     }
-
 }

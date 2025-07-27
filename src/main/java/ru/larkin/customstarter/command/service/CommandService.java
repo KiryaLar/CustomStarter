@@ -10,10 +10,8 @@ import ru.larkin.customstarter.command.exception.OverflowingQueueException;
 import ru.larkin.customstarter.command.model.CommandDto;
 import ru.larkin.customstarter.command.model.Priority;
 import ru.larkin.customstarter.command.validator.CommandValidator;
-import ru.larkin.customstarter.monitoring.config.MonitoringService;
+import ru.larkin.customstarter.monitoring.service.MonitoringService;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.*;
 
 @Slf4j
@@ -25,31 +23,27 @@ public class CommandService {
     private final CommandValidator commandValidator;
     private final MonitoringService monitoringService;
 
-    @DurationUnit(ChronoUnit.SECONDS)
-    @Value("${fixed.delay:3}")
-    private final Duration fixedDelay;
-
     public void processCommand(CommandDto command) {
         commandValidator.validate(command);
-        monitoringService.publishMetrics(command.getAuthor());
+
+        Runnable task = () -> {
+            try {
+                monitoringService.publishTasksInQueueMetrics(threadPoolExecutor.getQueue().size());
+                log.info("Исполнение {} команды \"{}\", автор - {}, время - {}", command.getPriority(), command.getDescription(), command.getAuthor(), command.getTime());
+                monitoringService.publishCompletedTasksPerAuthorMetrics(command.getAuthor());
+            } finally {
+                monitoringService.publishTasksInQueueMetrics(threadPoolExecutor.getQueue().size());
+            }
+        };
 
         if (command.getPriority().equals(Priority.COMMON)) {
-            processCommonCommand(command);
+            try {
+                threadPoolExecutor.execute(task);
+            } catch (RejectedExecutionException e) {
+                throw new OverflowingQueueException("Невозможно выполнить команду " + command.getDescription() + ", очередь переполнена");
+            }
         } else {
-            log.info("Исполнение критической команды \"{}\", автор - {}, время - {}", command.getDescription(), command.getAuthor(), command.getTime());
-        }
-    }
-
-    @Scheduled
-    public void publishQueueSizeMetric() {
-        monitoringService.publishTasksNumberMetrics(threadPoolExecutor.getQueue().size());
-    }
-
-    public void processCommonCommand(CommandDto command) {
-        try {
-            threadPoolExecutor.execute(() -> log.info("Исполнение обычной команды \"{}\", автор - {}, время - {}", command.getDescription(), command.getAuthor(), command.getTime()));
-        } catch (RejectedExecutionException e) {
-            throw new OverflowingQueueException("Невозможно выполнить команду "+command.getDescription()+", очередь переполнена");
+            task.run();
         }
     }
 }
