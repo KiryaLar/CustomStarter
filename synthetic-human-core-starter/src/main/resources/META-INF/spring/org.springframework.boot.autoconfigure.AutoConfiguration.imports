@@ -1,0 +1,4 @@
+ru.larkin.starter.StarterConfig
+ru.larkin.starter.audit.config.AuditConfig
+ru.larkin.starter.audit.config.KafkaConfig
+ru.larkin.starter.command.config.CommandConfig
